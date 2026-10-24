@@ -1,0 +1,8 @@
+Bidding is live.
+
+Anyone can bid on any Lodepass, funds held by the contract, the seller accepts when they like. 2% fee, on-chain.
+
+Sell or bid with a prompt instead of clicking:
+https://lodepass.github.io/lodepass/sell-prompt.txt
+
+#BNBChain #AIAgents

@@ -1,0 +1,35 @@
+Trade a Lodepass with my Agentic Wallet.
+
+Network: BNB Smart Chain (chainId 56)
+Collection: 0x31b074C8e77e44F29df285F19d4fc76E6D927d01
+Market:     0x36c8F300fAa5F470cB5E84F641bc21647c58aefd
+Fee: 2% of the sale, paid to the treasury in the same transaction
+
+SELL (list an ask)
+1. approve(market, tokenId) on the collection — per token, never unlimited
+2. list(tokenId, priceWei, durationDays) on the market, selector 0xca690ea2
+   example: list(1, 10000000000000000, 7) = ask 0.01 BNB for 7 days
+3. verify: market.listing(tokenId) shows my address as seller and the price I set
+4. optional: cancel(tokenId) removes the ask
+
+BUY
+1. market.listing(tokenId) → read price
+2. buy(tokenId) with value exactly equal to that price
+3. verify: ownerOf(tokenId) becomes my wallet, and the seller received price minus 2%
+
+BID (offer, funds held in escrow)
+1. bid(tokenId, durationDays) with value = my offer
+2. a higher bid from someone else refunds me automatically
+3. cancelBid(tokenId) returns my funds
+
+ACCEPT A BID (I own the piece)
+1. approve(market, tokenId)
+2. acceptBid(tokenId) — transfers the piece to the bidder, pays me price minus 2%
+
+Rules to check before signing:
+- list and acceptBid both need my token approved for the market
+- buy needs value exactly equal to the listing price; anything else reverts
+- listings and bids expire; expired ones cannot be filled
+- there is no owner, no pause and no withdraw — the fee goes straight to the treasury
+
+Page with buttons: https://lodepass.github.io/lodepass/
