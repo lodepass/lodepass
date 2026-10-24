@@ -59,10 +59,18 @@
     <div class="row"><span>token id</span><input id="tid" value="1" /></div>
     <div class="row"><span>ask</span><b id="ask">—</b></div>
     <div class="row"><span>seller</span><b id="seller">—</b></div>
+    <div class="row"><span>best bid</span><b id="bid">—</b></div>
     <button id="buy" disabled>buy</button>
+    <button id="cancelAsk" disabled>cancel listing</button>
+
+    <div class="row"><span>your bid (BNB)</span><input id="bamount" value="0.005" /></div>
+    <div class="row"><span>bid days</span><input id="bdays" value="7" /></div>
+    <button id="bidBtn" disabled>place bid</button>
+    <button id="cancelBid" disabled>cancel my bid</button>
+    <button id="acceptBid" disabled>accept bid (if it's yours to sell)</button>
 
     <div class="row"><span>list price (BNB)</span><input id="lprice" value="0.01" /></div>
-    <div class="row"><span>days</span><input id="ldays" value="7" /></div>
+    <div class="row"><span>list days</span><input id="ldays" value="7" /></div>
     <button id="approve" disabled>1 · approve piece</button>
     <button id="list" disabled>2 · list piece</button>
     <div class="msg" id="mmsg"></div>
@@ -72,7 +80,7 @@
 
 <script type="module">
 const CONTRACT = "0x31b074C8e77e44F29df285F19d4fc76E6D927d01";
-const MARKET   = "0xf607c6aD07c173056B7D4D63d0c9d26Ad9D3f4E2";
+const MARKET   = "0x36c8F300fAa5F470cB5E84F641bc21647c58aefd";
 const RPC      = "https://bsc-dataseed.bnbchain.org";
 const ZERO     = "0x0000000000000000000000000000000000000000";
 
@@ -90,14 +98,18 @@ const LODE_ABI = [
 ];
 const MARKET_ABI = [
   "function listing(uint256) view returns (address seller, uint96 price, uint64 expiry)",
-  "function quote(uint256) view returns (uint256 price, uint256 fee, address seller, uint64 expiry)",
+  "function bestBid(uint256) view returns (address bidder, uint96 amount, uint64 expiry)",
   "function buy(uint256 tokenId) payable",
   "function list(uint256 tokenId, uint256 price, uint64 durationDays)",
+  "function cancel(uint256 tokenId)",
+  "function bid(uint256 tokenId, uint64 durationDays) payable",
+  "function cancelBid(uint256 tokenId)",
+  "function acceptBid(uint256 tokenId)",
 ];
 const REG_ABI = ["function balanceOf(address) view returns (uint256)"];
 
 const $ = (id) => document.getElementById(id);
-let E, provider, signer, account, lode, market, roLode, roMarket;
+let E, provider, signer, account, lode, market, roLode, roMarket, myOwner = false;
 
 const setMsg = (t) => ($("msg").textContent = t);
 const setMkt = (t) => ($("mmsg").textContent = t);
@@ -155,10 +167,12 @@ async function connect() {
 async function refreshAccount() {
   const e = await lib();
   await readOnly();
-  const [perWallet, mine, reg, price, freeUsed] = await Promise.all([
+  const [perWallet, mine, reg, price, freeUsed, own] = await Promise.all([
     roLode.MAX_PER_WALLET(), roLode.mintedBy(account), roLode.agentRegistry(),
     roLode.priceWei(), roLode.freeUsed(account),
+    new e.Contract(CONTRACT, ["function ownerOf(uint256) view returns (address)"], provider).ownerOf(BigInt($("tid").value || "0")).catch(() => ZERO),
   ]);
+  myOwner = own && own.toLowerCase() === account.toLowerCase();
   $("quota").textContent = `${mine} / ${perWallet}`;
   const registry = new e.Contract(reg, REG_ABI, provider);
   const bal = await registry.balanceOf(account);
@@ -180,14 +194,27 @@ async function checkListing() {
       $("ask").textContent = "not listed";
       $("seller").textContent = "—";
       $("buy").disabled = true;
-      return;
+      $("cancelAsk").disabled = true;
+    } else {
+      const expired = Number(l.expiry) * 1000 < Date.now();
+      $("ask").textContent = `${e.formatEther(l.price)} BNB${expired ? " (expired)" : ""}`;
+      $("seller").textContent = l.seller.slice(0, 8) + "…" + l.seller.slice(-4);
+      const mine = !!account && l.seller.toLowerCase() === account.toLowerCase();
+      $("buy").disabled = expired || mine || !account;
+      $("buy").textContent = mine ? "your listing" : "buy";
+      $("cancelAsk").disabled = !mine;
     }
-    const expired = Number(l.expiry) * 1000 < Date.now();
-    $("ask").textContent = `${e.formatEther(l.price)} BNB${expired ? " (expired)" : ""}`;
-    $("seller").textContent = l.seller.slice(0, 8) + "…" + l.seller.slice(-4);
-    const mine = account && l.seller.toLowerCase() === account.toLowerCase();
-    $("buy").disabled = expired || mine || !account;
-    $("buy").textContent = mine ? "your listing" : "buy";
+
+    const b = await roMarket.bestBid(id);
+    if (!b.bidder || b.bidder === ZERO) {
+      $("bid").textContent = "none";
+    } else {
+      const bexp = Number(b.expiry) * 1000 < Date.now();
+      $("bid").textContent = `${e.formatEther(b.amount)} BNB${bexp ? " (expired)" : ""}`;
+    }
+    const myBid = !!account && b.bidder && b.bidder.toLowerCase() === account.toLowerCase();
+    $("cancelBid").disabled = !myBid;
+    $("acceptBid").disabled = !account || !!(b.bidder === ZERO) || !myOwner;
   } catch (err) { setMkt("check failed: " + (err.shortMessage || err.message)); }
 }
 
@@ -254,11 +281,67 @@ $("list").addEventListener("click", async () => {
   } catch (err) { setMkt("list failed: " + (err.shortMessage || err.message)); }
 });
 
+
+$("cancelAsk").addEventListener("click", async () => {
+  try {
+    if (!signer) return setMkt("connect a wallet first");
+    setMkt("cancelling…");
+    const id = BigInt($("tid").value || "0");
+    const tx = await market.cancel(id);
+    await tx.wait();
+    setMkt("listing cancelled ✓");
+    await checkListing();
+    await refreshPublic();
+  } catch (err) { setMkt("cancel failed: " + (err.shortMessage || err.message)); }
+});
+
+$("bidBtn").addEventListener("click", async () => {
+  try {
+    if (!signer) return setMkt("connect a wallet first");
+    const e = await lib();
+    setMkt("placing bid (funds are held by the contract)…");
+    const id = BigInt($("tid").value || "0");
+    const amount = e.parseEther(String($("bamount").value || "0"));
+    const days = BigInt($("bdays").value || "7");
+    const tx = await market.bid(id, days, { value: amount });
+    setMkt("tx sent: " + tx.hash);
+    await tx.wait();
+    setMkt("bid placed ✓ " + tx.hash);
+    await checkListing();
+  } catch (err) { setMkt("bid failed: " + (err.shortMessage || err.message)); }
+});
+
+$("cancelBid").addEventListener("click", async () => {
+  try {
+    if (!signer) return setMkt("connect a wallet first");
+    setMkt("cancelling bid…");
+    const id = BigInt($("tid").value || "0");
+    const tx = await market.cancelBid(id);
+    await tx.wait();
+    setMkt("bid cancelled, refunded ✓");
+    await checkListing();
+  } catch (err) { setMkt("cancel bid failed: " + (err.shortMessage || err.message)); }
+});
+
+$("acceptBid").addEventListener("click", async () => {
+  try {
+    if (!signer) return setMkt("connect a wallet first");
+    setMkt("accepting bid…");
+    const id = BigInt($("tid").value || "0");
+    const tx = await market.acceptBid(id);
+    await tx.wait();
+    setMkt("sold to the bidder ✓ " + tx.hash);
+    await checkListing();
+    await refreshPublic();
+  } catch (err) { setMkt("accept failed: " + (err.shortMessage || err.message)); }
+});
+
 (async () => {
   if (typeof window.ethereum === "undefined") {
     $("walletNote").textContent = "No browser wallet here, so the page is read-only. Open it in your wallet app to mint or trade.";
     $("mint").textContent = "connect a wallet to mint";
     $("buy").textContent = "connect a wallet to buy";
+    $("bidBtn").textContent = "connect a wallet to bid";
   }
   try {
     await refreshPublic();
