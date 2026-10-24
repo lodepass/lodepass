@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Lodepass — mining pass for .ai agents</title>
+<title>Lodepass - mining pass for .ai agents</title>
 <style>
   :root { --ink:#e8e6e1; --dim:#8b929c; --line:#232a33; --gold:#f5c76a; --bg:#0b0e11; }
   * { box-sizing:border-box; margin:0; padding:0; }
@@ -27,13 +27,13 @@
 <body>
 <div class="card">
   <h1>Lodepass</h1>
-  <div class="sub">Pass tambang on-chain · mint hanya untuk pemegang Binance Agent ID (.ai)</div>
+  <div class="sub">On-chain mining pass · mint is limited to Binance Agent ID (.ai) holders</div>
 
   <div class="art"><img id="art" alt="lode" /></div>
 
   <div class="row"><span>supply</span><b id="supply">—</b></div>
-  <div class="row"><span>harga (setelah 1 gratis)</span><b id="price">—</b></div>
-  <div class="row"><span>kuota kamu</span><b id="quota">—</b></div>
+  <div class="row"><span>price (after your free piece)</span><b id="price">—</b></div>
+  <div class="row"><span>your quota</span><b id="quota">—</b></div>
   <div class="row"><span>gate</span><b id="gate">—</b></div>
 
   <button id="mint" disabled>connect wallet</button>
@@ -65,7 +65,7 @@ const $ = (id) => document.getElementById(id);
 let provider, signer, account, contract;
 
 async function initEthers() {
-  if (!window.ethereum) throw new Error("butuh wallet di browser (MetaMask/Rabby)");
+  if (!window.ethereum) throw new Error("a browser wallet is required (MetaMask/Rabby)");
   const { ethers } = await import("https://esm.sh/ethers@6");
   provider = new ethers.BrowserProvider(window.ethereum);
   await provider.send("eth_requestAccounts", []);
@@ -85,11 +85,11 @@ async function refresh(ethers) {
   $("quota").textContent = `${mine} / ${perWallet}`;
   const registry = new ethers.Contract(reg, REG_ABI, provider);
   const bal = await registry.balanceOf(account);
-  $("gate").textContent = bal > 0n ? "Agent ID ✓" : "bukan pemegang .ai";
+  $("gate").textContent = bal > 0n ? "Agent ID ✓" : "not an .ai holder";
   $("mint").disabled = bal === 0n || total >= max;
-  $("mint").textContent = bal === 0n ? "wallet ini tidak punya Agent ID" : "mint 1";
+  $("mint").textContent = bal === 0n ? "this wallet has no Agent ID" : "mint 1";
 
-  // preview art dari keping terakhir (atau #1)
+  // preview art from the latest piece (or #1)
   const id = total > 0n ? total : 1n;
   try {
     const uri = await contract.tokenURI(id);
@@ -100,25 +100,25 @@ async function refresh(ethers) {
 
 $("mint").addEventListener("click", async () => {
   try {
-    $("msg").textContent = "menyiapkan transaksi…";
+    $("msg").textContent = "preparing the transaction…";
     const ethers = await initEthers();
     const mine = await contract.mintedBy(account);
     const price = await contract.priceWei();
-    const value = mine === 0n ? 0n : price; // keping pertama gratis
+    const value = mine === 0n ? 0n : price; // first piece is free
     const tx = await contract.mint(1, { value });
-    $("msg").textContent = "tx terkirim: " + tx.hash;
+    $("msg").textContent = "tx sent: " + tx.hash;
     await tx.wait();
-    $("msg").textContent = "berhasil ✓ " + tx.hash;
+    $("msg").textContent = "confirmed ✓ " + tx.hash;
     await refresh(ethers);
   } catch (e) {
-    $("msg").textContent = "gagal: " + (e.shortMessage || e.message || e);
+    $("msg").textContent = "failed: " + (e.shortMessage || e.message || e);
   }
 });
 
 (async () => {
   try {
     if (CONTRACT === "0x0000000000000000000000000000000000000000") {
-      $("msg").innerHTML = "kontrak belum di-deploy — isi <code>CONTRACT</code> di file ini.";
+      $("msg").innerHTML = "contract not deployed yet - set <code>CONTRACT</code> in this file.";
       return;
     }
     const ethers = await initEthers();

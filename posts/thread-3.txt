@@ -1,0 +1,3 @@
+Forge is where supply shrinks.
+
+Send three pieces to the contract, it burns them and mints one piece one tier higher. Costs 0.0005 BNB. Every forge removes three from circulation and adds one.

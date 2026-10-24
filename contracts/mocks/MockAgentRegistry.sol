@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
 pragma solidity 0.8.24;
 
-/// @dev Registry tiruan untuk tes: balanceOf > 0 = pemegang Agent ID.
+/// @dev Test registry: balanceOf > 0 means the wallet holds an Agent ID.
 contract MockAgentRegistry {
     mapping(address => uint256) public balanceOf;
 

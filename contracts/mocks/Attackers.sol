@@ -13,7 +13,7 @@ interface ILodeMarket {
     function buy(uint256 tokenId) external payable;
 }
 
-/// @dev Penyerang 1: mencoba mint ulang saat menerima callback ERC721.
+/// @dev Attacker 1: tries to mint again inside the ERC721 receive callback.
 contract ReenterMint {
     ILodepass public target;
     uint256 public attempts;
@@ -39,7 +39,7 @@ contract ReenterMint {
     }
 }
 
-/// @dev Penyerang 2: mencoba menarik pool lewat redeem berulang saat menerima BNB.
+/// @dev Attacker 2: tries to drain the pool by re-entering redeem while receiving BNB.
 contract ReenterRedeem {
     ILodepass public target;
     uint256 public attempts;
@@ -71,7 +71,7 @@ contract ReenterRedeem {
     }
 }
 
-/// @dev Penyerang 3: membeli keping lalu mencoba beli lagi di callback.
+/// @dev Attacker 3: buys a piece then tries to buy again inside the callback.
 contract ReenterBuy {
     ILodeMarket public market;
     uint256 public attempts;

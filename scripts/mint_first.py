@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
-"""mint_first.py — tunggu mint Lodepass buka, lalu mint 1 keping GRATIS dari wallet .ai.
+"""mint_first.py - wait for the Lodepass mint to open, then mint 1 FREE piece from the .ai wallet.
 
-Keping pertama per wallet gratis (FREE_PER_WALLET=1), jadi yang dibayar cuma gas (~0,000014 BNB).
-Verifikasi hasil dari event Transfer + balanceOf, bukan dari respons backend.
+The first piece per wallet is free (FREE_PER_WALLET=1), so only gas is paid (~0.000014 BNB).
+Verify the result from the Transfer event and balanceOf, not from a backend response.
 """
 import json
 import subprocess
@@ -71,7 +71,7 @@ def main():
             break
         time.sleep(3)
     if not rc:
-        log("receipt tidak muncul")
+        log("receipt never appeared")
         return
     log(f"status {rc.get('status')} · gas {int(rc['gasUsed'],16)}")
 

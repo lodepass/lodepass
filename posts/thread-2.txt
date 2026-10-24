@@ -1,0 +1,3 @@
+Mining is on-chain and needs no staking step.
+
+Common yields 1 LODE a day, Uncommon 3, Rare 8, Legendary 20. Claim whenever you want, then redeem the units for BNB out of the reward pool at 0.000005 BNB per unit.

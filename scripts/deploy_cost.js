@@ -1,4 +1,4 @@
-// scripts/deploy_cost.js — ukur gas deploy + gas mint/forge di jaringan lokal (biaya nyata, gratis diuji lokal)
+// scripts/deploy_cost.js - measure deploy/mint/forge gas on the local network (real cost, tested locally for free)
 const { ethers } = require("hardhat");
 
 async function main() {

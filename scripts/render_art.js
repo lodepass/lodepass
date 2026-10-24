@@ -1,4 +1,4 @@
-// scripts/render_art.js — render SVG on-chain Lodepass ke folder art/ (tanpa deploy mainnet)
+// scripts/render_art.js - render Lodepass on-chain SVG into art/ (no mainnet deploy)
 const fs = require("fs");
 const path = require("path");
 const { ethers } = require("hardhat");

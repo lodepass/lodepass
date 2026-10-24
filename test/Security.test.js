@@ -35,22 +35,22 @@ async function warp(ts) {
   await ethers.provider.send("evm_mine", []);
 }
 
-describe("SERANGAN — Lodepass & LodeMarket", function () {
-  it("reentrancy saat mint tidak bisa melewati batas 5/wallet", async function () {
+describe("ATTACKS - Lodepass & LodeMarket", function () {
+  it("reentrancy on mint cannot bypass the 5 per wallet cap", async function () {
     const { lode, reg, deployer } = await deployAll();
     const A = await ethers.getContractFactory("ReenterMint");
     const atk = await A.deploy(await lode.getAddress());
     await atk.waitForDeployment();
-    // penyerang didaftarkan sebagai agent supaya boleh mint
+    // the attacker is registered as an agent so it may mint
     await (await reg.set(await atk.getAddress(), 1)).wait();
 
     await (await atk.attack(1, { value: 0 })).wait();
     const bal = await lode.balanceOf(await atk.getAddress());
-    console.log("      keping milik penyerang setelah reentrancy:", bal.toString(), "· attempts:", (await atk.attempts()).toString());
+    console.log("      attacker pieces after reentrancy:", bal.toString(), "· attempts:", (await atk.attempts()).toString());
     expect(bal <= 5n).to.equal(true); // batas wallet tetap berlaku
   });
 
-  it("reentrancy saat redeem tidak bisa menguras pool lebih dari earned", async function () {
+  it("reentrancy on redeem cannot drain more than earned", async function () {
     const { lode, reg, treasury, agentA } = await deployAll();
     const A = await ethers.getContractFactory("ReenterRedeem");
     const atk = await A.deploy(await lode.getAddress());
@@ -60,7 +60,7 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
     await (await lode.connect(treasury).fundRewards({ value: ethers.parseEther("0.01") })).wait();
     const poolBefore = await lode.rewardPool();
 
-    // beri keping ke penyerang, tambang 30 hari, claim
+    // hand a piece to the attacker, mine 30 days, claim
     await (await lode.connect(agentA).mint(1, { value: 0 })).wait();
     await (await lode.connect(agentA).transferFrom(agentA.address, await atk.getAddress(), 1)).wait();
     const t0 = (await ethers.provider.getBlock("latest")).timestamp;
@@ -73,14 +73,14 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
     await (await atk.attack(units)).wait();
 
     const poolAfter = await lode.rewardPool();
-    console.log("      earned penyerang:", units.toString(), "· pool turun:", (poolBefore - poolAfter).toString());
-    // pool hanya boleh turun sebesar unit yang benar-benar dimiliki
+    console.log("      attacker earned:", units.toString(), "· pool drop:", (poolBefore - poolAfter).toString());
+    // the pool may only drop by the units actually owned
     expect(poolBefore - poolAfter).to.equal(expected);
     expect(await atk.earnedNow()).to.equal(0n);
     expect(poolAfter).to.equal(poolBefore - expected);
   });
 
-  it("pool tidak bisa dikuras melebihi rewardPool (PoolTooSmall)", async function () {
+  it("pool cannot be drained beyond rewardPool", async function () {
     const { lode, agentA, treasury } = await deployAll();
     await (await lode.connect(agentA).mint(1, { value: 0 })).wait();
     const t0 = (await ethers.provider.getBlock("latest")).timestamp;
@@ -90,27 +90,27 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
     const need = await lode.quoteRedeem(units);
     await (await lode.connect(treasury).fundRewards({ value: need / 2n })).wait();
     await expect(lode.connect(agentA).redeem(units)).to.be.revertedWithCustomError(lode, "PoolTooSmall");
-    expect(await lode.rewardPool()).to.equal(need / 2n); // pool tidak berkurang
+    expect(await lode.rewardPool()).to.equal(need / 2n); // pool untouched
   });
 
-  it("forge tidak bisa dipakai dua kali dengan keping yang sama (sudah di-burn)", async function () {
+  it("forge cannot reuse burned pieces", async function () {
     const { lode, agentA } = await deployAll();
     await (await lode.connect(agentA).mint(3, { value: PRICE * 2n })).wait();
     await (await lode.connect(agentA).forge([1, 2, 3], { value: FORGE_FEE })).wait();
     await expect(
       lode.connect(agentA).forge([1, 2, 3], { value: FORGE_FEE })
-    ).to.be.reverted; // ownerOf revert karena sudah burn
+    ).to.be.reverted; // ownerOf reverts because the piece is burned
     expect(await lode.totalBurned()).to.equal(3n);
   });
 
-  it("tier hasil forge tidak pernah melebihi 3 (Legendary)", async function () {
+  it("forged tier never exceeds 3 (Legendary)", async function () {
     const { lode, agentA } = await deployAll();
-    // cari 3 keping Legendary
+    // look for 3 Legendary pieces
     await (await lode.connect(agentA).mint(5, { value: PRICE * 4n })).wait();
     let legend = [];
     for (let i = 1; i <= 5; i++) if (Number(await lode.tierOf(i)) === 3) legend.push(i);
     if (legend.length < 3) {
-      // kalau belum ada 3, forge bertingkat dari 5 keping lalu cek batasnya
+      // if there are not 3 yet, forge in stages from 5 pieces and check the cap
       const t = [1, 2, 3];
       await (await lode.connect(agentA).forge(t, { value: FORGE_FEE })).wait();
       const t2 = [4, 5, 6];
@@ -122,7 +122,7 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
     }
   });
 
-  it("pasar: pembeli tidak bisa beli 2x di callback (reentrancy)", async function () {
+  it("market: buyer cannot buy twice via callback reentrancy", async function () {
     const { lode, market, agentA, treasury } = await deployAll();
     await (await lode.connect(agentA).mint(1, { value: 0 })).wait();
     await (await lode.connect(agentA).approve(await market.getAddress(), 1)).wait();
@@ -135,11 +135,11 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
 
     console.log("      attempts:", (await atk.attempts()).toString(), "· owner:", await lode.ownerOf(1));
     expect(await lode.ownerOf(1)).to.equal(await atk.getAddress());
-    // listing sudah terhapus -> pembelian kedua gagal
+    // listing already deleted -> second buy fails
     await expect(market.connect(agentA).buy(1, { value: PRICE })).to.be.revertedWithCustomError(market, "NotListed");
   });
 
-  it("pasar: penjual tidak bisa beli kepingnya sendiri", async function () {
+  it("market: seller cannot buy their own piece", async function () {
     const { lode, market, agentA } = await deployAll();
     await (await lode.connect(agentA).mint(1, { value: 0 })).wait();
     await (await lode.connect(agentA).approve(await market.getAddress(), 1)).wait();
@@ -147,7 +147,7 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
     await expect(market.connect(agentA).buy(1, { value: PRICE })).to.be.revertedWithCustomError(market, "BuyerIsSeller");
   });
 
-  it("pasar: listing kedaluwarsa tidak bisa dibeli", async function () {
+  it("market: expired listing cannot be bought", async function () {
     const { lode, market, agentA, agentB } = await deployAll();
     await (await lode.connect(agentA).mint(1, { value: 0 })).wait();
     await (await lode.connect(agentA).approve(await market.getAddress(), 1)).wait();
@@ -157,18 +157,18 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
     await expect(market.connect(agentB).buy(1, { value: PRICE })).to.be.revertedWithCustomError(market, "Expired");
   });
 
-  it("pasar: keping yang sudah dipindah penjual -> beli gagal (bukan dana hilang)", async function () {
+  it("market: piece moved by seller makes the buy revert, no funds lost", async function () {
     const { lode, market, agentA, agentB, human } = await deployAll();
     await (await lode.connect(agentA).mint(1, { value: 0 })).wait();
     await (await lode.connect(agentA).approve(await market.getAddress(), 1)).wait();
     await (await market.connect(agentA).list(1, PRICE, 7)).wait();
     await (await lode.connect(agentA).transferFrom(agentA.address, human.address, 1)).wait();
     await expect(market.connect(agentB).buy(1, { value: PRICE })).to.be.reverted;
-    // dana pembeli tidak masuk (transaksi revert)
+    // buyer funds never enter (transaction reverts)
     expect(await ethers.provider.getBalance(await market.getAddress())).to.equal(0n);
   });
 
-  it("pasar: harga 0 / durasi aneh ditolak", async function () {
+  it("market: zero price or odd duration is rejected", async function () {
     const { lode, market, agentA } = await deployAll();
     await (await lode.connect(agentA).mint(1, { value: 0 })).wait();
     await (await lode.connect(agentA).approve(await market.getAddress(), 1)).wait();
@@ -177,14 +177,14 @@ describe("SERANGAN — Lodepass & LodeMarket", function () {
     await expect(market.connect(agentA).list(1, PRICE, 366)).to.be.revertedWithCustomError(market, "BadExpiry");
   });
 
-  it("tidak ada jalur admin: kontrak tidak punya owner/withdraw/pause/upgrade", async function () {
+  it("no admin path: no owner, withdraw, pause or upgrade", async function () {
     const { lode, market } = await deployAll();
     const forbidden = ["owner", "withdraw", "pause", "unpause", "setPrice", "setMintOpen", "transferOwnership", "upgradeTo", "setTreasury", "rescue"];
     for (const c of [lode, market]) {
       const names = c.interface.fragments.map((f) => (f.name || "").toLowerCase());
       for (const f of forbidden) expect(names.includes(f)).to.equal(false);
     }
-    // saldo kontrak = rewardPool (tidak ada dana nyangkut)
+    // contract balance equals rewardPool (no funds stuck)
     expect(await ethers.provider.getBalance(await lode.getAddress())).to.equal(await lode.rewardPool());
   });
 });

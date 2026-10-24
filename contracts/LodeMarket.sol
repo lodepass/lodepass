@@ -5,7 +5,7 @@ import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /// @title LodeMarket
 /// @notice Pasar sekunder Lodepass: list / cancel / buy. Fee 2% ke treasury, semuanya immutable.
-///         Tanpa owner, tanpa pause, tanpa withdraw: fee langsung diteruskan ke treasury saat penjualan.
+///         No owner, no pause, no withdraw: the fee is forwarded to the treasury inside the sale.
 contract LodeMarket {
     uint256 public constant FEE_BPS = 200; // 2%
 
@@ -44,7 +44,7 @@ contract LodeMarket {
         if (collection.ownerOf(tokenId) != msg.sender) revert NotOwner();
         if (price == 0) revert BadPrice();
         if (durationDays == 0 || durationDays > 365) revert BadExpiry();
-        // NFT harus di-approve ke pasar ini dulu (per-token atau setApprovalForAll)
+        // the NFT must be approved for this market first (per-token or setApprovalForAll)
         if (
             collection.getApproved(tokenId) != address(this) &&
             !collection.isApprovedForAll(msg.sender, address(this))
@@ -86,7 +86,7 @@ contract LodeMarket {
         emit Sold(tokenId, msg.sender, l.seller, l.price, fee);
     }
 
-    /// @notice harga total yang harus dikirim pembeli untuk sebuah keping
+    /// @notice total price a buyer must send for one piece
     function quote(uint256 tokenId) external view returns (uint256 price, uint256 fee, address seller, uint64 expiry) {
         Listing memory l = listing[tokenId];
         price = l.price;

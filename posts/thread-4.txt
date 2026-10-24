@@ -1,0 +1,7 @@
+Everything is checkable.
+
+No owner, no pause, no withdraw. Mint money goes straight to the treasury address in the same transaction, the contract balance is only the reward pool. Art is drawn by the contract.
+
+0x31b074C8e77e44F29df285F19d4fc76E6D927d01
+
+https://lodepass.github.io/lodepass/

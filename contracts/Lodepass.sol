@@ -12,8 +12,8 @@ interface IAgentRegistry {
 }
 
 /// @title Lodepass
-/// @notice Pass tambang on-chain untuk pemegang Binance Agent ID (.ai).
-///         mint -> mine (yield on-chain) -> forge (3 keping jadi 1 tier atas) -> claim.
+/// @notice On-chain mining pass for holders of a Binance Agent ID (.ai).
+///         mint -> mine (on-chain yield) -> forge (3 pieces into 1 higher tier) -> claim.
 ///         Tanpa owner/pause/withdraw/setPrice: semua aturan dikunci di field immutable saat deploy.
 ///         Art 100% on-chain (SVG dari tokenId) + royalty ERC-2981 2,5%.
 contract Lodepass is ERC721, IERC2981 {
@@ -23,17 +23,17 @@ contract Lodepass is ERC721, IERC2981 {
     uint256 public constant MAX_PER_WALLET = 5;
     uint256 public constant FREE_PER_WALLET = 1;
     uint256 public constant FORGE_COST = 3;
-    uint256 public constant ROYALTY_BPS = 250; // 2,5% — seminimal yang masih lazim dihormati marketplace
+    uint256 public constant ROYALTY_BPS = 250; // 2.5% - the lowest rate marketplaces commonly honour
 
     IAgentRegistry public immutable agentRegistry;
     address payable public immutable treasury;
     uint256 public immutable priceWei;
     uint256 public immutable forgeFeeWei;
-    /// @dev harga 1 unit tambang (1e18) dalam wei — penopang nilai, dikunci saat deploy
+    /// @dev price of 1 mining unit (1e18) in wei - the value floor, locked at deploy
     uint256 public immutable unitPriceWei;
     uint256 public immutable startTime;
 
-    /// @dev pool BNB untuk menukar hasil tambang; satu-satunya dana yang dipegang kontrak ini
+    /// @dev BNB pool used to redeem mining units; the only funds this contract ever holds
     uint256 public rewardPool;
 
     uint256 public totalMinted;
@@ -86,7 +86,7 @@ contract Lodepass is ERC721, IERC2981 {
     function mint(uint256 quantity) external payable {
         if (block.timestamp < startTime) revert NotOpen();
         if (quantity == 0 || quantity > MAX_PER_WALLET) revert BadQuantity();
-        // Gate: hanya pemegang Binance Agent ID (.ai), dibaca dari registry on-chain.
+        // Gate: Binance Agent ID (.ai) holders only, read from the on-chain registry.
         if (agentRegistry.balanceOf(msg.sender) == 0) revert NotAgent();
         if (mintedBy[msg.sender] + quantity > MAX_PER_WALLET) revert WalletLimit();
         if (totalMinted + quantity > MAX_SUPPLY) revert SoldOut();
@@ -110,7 +110,7 @@ contract Lodepass is ERC721, IERC2981 {
         _forward(msg.value);
     }
 
-    // ------------------------------------------------------------------ forge: 3 keping -> 1 tier atas
+    // ------------------------------------------------------------------ forge: 3 pieces -> 1 higher tier
     function forge(uint256[3] calldata ids) external payable returns (uint256 newTokenId) {
         if (ids[0] == ids[1] || ids[1] == ids[2] || ids[0] == ids[2]) revert DuplicateToken();
         if (totalMinted + 1 > MAX_SUPPLY) revert SoldOut();
@@ -123,7 +123,7 @@ contract Lodepass is ERC721, IERC2981 {
             if (t > best) best = t;
         }
 
-        // yield yang belum cair diselamatkan dulu, baru keping di-burn
+        // settle unclaimed yield first, then burn the pieces
         for (uint256 i = 0; i < 3; i++) {
             earned[msg.sender] += _pending(ids[i]);
             delete lastClaim[ids[i]];
@@ -149,7 +149,7 @@ contract Lodepass is ERC721, IERC2981 {
     }
 
     // ------------------------------------------------------------------ mine / claim
-    /// @dev laju tambang per hari (satuan 1e18): tier 0..3
+    /// @dev mining rate per day (1e18 units): tier 0..3
     function rateOf(uint256 tokenId) public view returns (uint256) {
         uint8 t = tierOf(tokenId);
         if (t == 0) return 1e18;
@@ -178,19 +178,19 @@ contract Lodepass is ERC721, IERC2981 {
     }
 
     // ------------------------------------------------------------------ tukar hasil tambang jadi BNB
-    /// @notice siapa pun bisa menambah pool (termasuk treasury dari hasil mint)
+    /// @notice anyone can top up the pool (treasury does it from mint proceeds)
     function fundRewards() external payable {
         require(msg.value > 0, "zero");
         rewardPool += msg.value;
         emit RewardsFunded(msg.sender, msg.value, rewardPool);
     }
 
-    /// @notice berapa BNB untuk sejumlah unit
+    /// @notice how much BNB a number of units is worth
     function quoteRedeem(uint256 units) public view returns (uint256) {
         return (units * unitPriceWei) / 1e18;
     }
 
-    /// @notice tukar unit hasil tambang jadi BNB dari pool
+    /// @notice swap mined units for BNB out of the pool
     function redeem(uint256 units) external {
         if (units == 0 || earned[msg.sender] < units) revert NotEnoughEarned();
         uint256 amount = quoteRedeem(units);
@@ -212,7 +212,7 @@ contract Lodepass is ERC721, IERC2981 {
     }
 
     // ------------------------------------------------------------------ tier
-    /// @dev 0 Common (60%) · 1 Uncommon (25%) · 2 Rare (12%) · 3 Legendary (3%)
+    /// @dev 0 Common (60%) / 1 Uncommon (25%) / 2 Rare (12%) / 3 Legendary (3%)
     function tierOf(uint256 tokenId) public view returns (uint8) {
         if (isForged[tokenId]) return uint8(forgedTier[tokenId]);
         uint256 h = uint256(keccak256(abi.encodePacked(tokenId))) % 100;
