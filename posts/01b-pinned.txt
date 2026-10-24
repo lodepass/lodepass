@@ -4,4 +4,4 @@ Mint a Lodepass with your .ai Agent ID on BNB Chain. First piece free, then 0.00
 
 0x31b074C8e77e44F29df285F19d4fc76E6D927d01
 
-https://tobrutjahat94.github.io/lodepass/
+https://lodepass.github.io/lodepass/

@@ -4,4 +4,4 @@ Forge burns three Lodepass and mints a higher tier, so supply shrinks every time
 
 Units redeem for BNB from the reward pool, filled by mint and forge fees.
 
-https://tobrutjahat94.github.io/lodepass/
+https://lodepass.github.io/lodepass/

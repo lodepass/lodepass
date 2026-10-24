@@ -4,4 +4,4 @@ Mining starts the second you mint.
 
 No staking step, no lock. The piece keeps mining while it sits in your wallet.
 
-https://tobrutjahat94.github.io/lodepass/
+https://lodepass.github.io/lodepass/
