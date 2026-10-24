@@ -257,6 +257,8 @@ $("list").addEventListener("click", async () => {
 (async () => {
   if (typeof window.ethereum === "undefined") {
     $("walletNote").textContent = "No browser wallet here, so the page is read-only. Open it in your wallet app to mint or trade.";
+    $("mint").textContent = "connect a wallet to mint";
+    $("buy").textContent = "connect a wallet to buy";
   }
   try {
     await refreshPublic();
