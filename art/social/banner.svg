@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 500" width="1500" height="500">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#141006"/><stop offset="55%" stop-color="#0b0e11"/><stop offset="100%" stop-color="#070a0d"/></linearGradient>
+<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff4d6"/><stop offset="100%" stop-color="#f5c76a"/></linearGradient>
+<linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c99a3e"/><stop offset="100%" stop-color="#6b4a14"/></linearGradient>
+<filter id="b"><feGaussianBlur stdDeviation="26"/></filter>
+<filter id="g"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="3"/><feColorMatrix type="saturate" values="0"/></filter>
+</defs>
+<rect width="1500" height="500" fill="url(#bg)"/>
+<rect width="1500" height="500" filter="url(#g)" opacity="0.05"/>
+<g opacity="0.25" stroke="#f5c76a" fill="none" stroke-width="1">
+<path d="M -20 380 Q 200 330 420 380 T 900 380 T 1520 372"/>
+<path d="M -20 420 Q 220 360 460 420 T 940 418 T 1520 410"/>
+<path d="M -20 460 Q 240 400 480 460 T 980 456 T 1520 450"/>
+</g>
+<circle cx="250" cy="250" r="150" fill="#f5c76a" opacity="0.14" filter="url(#b)"/>
+<polygon points="250,110 355,172 355,328 250,390 145,328 145,172" fill="url(#gd)"/>
+<polygon points="250,110 355,172 250,250 145,172" fill="url(#gl)" opacity="0.95"/>
+<polygon points="250,250 355,172 355,328 250,390" fill="url(#gd)" opacity="0.9"/>
+<polygon points="250,250 145,172 145,328 250,390" fill="url(#gl)" opacity="0.3"/>
+<polygon points="250,110 355,172 355,328 250,390 145,328 145,172" fill="none" stroke="#f5c76a" stroke-width="3"/>
+<text x="250" y="272" fill="#1a1205" font-family="monospace" font-size="76" font-weight="bold" text-anchor="middle">L</text>
+<text x="470" y="230" fill="#f7f2e6" font-family="monospace" font-size="78" letter-spacing="10">LODEPASS</text>
+<text x="474" y="284" fill="#9aa3ad" font-family="monospace" font-size="26" letter-spacing="4">mining pass for .ai agents · BNB Chain</text>
+<text x="474" y="336" fill="#f5c76a" font-family="monospace" font-size="24" letter-spacing="3">first piece free · forge 3 into 1 · no owner</text>
+<text x="474" y="400" fill="#6f7883" font-family="monospace" font-size="20" letter-spacing="2">tobrutjahat94.github.io/lodepass</text>
+</svg>

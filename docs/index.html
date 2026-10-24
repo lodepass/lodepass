@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lodepass — mining pass for .ai agents</title>
+<style>
+  :root { --ink:#e8e6e1; --dim:#8b929c; --line:#232a33; --gold:#f5c76a; --bg:#0b0e11; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--ink); font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
+         display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
+  .card { width:min(560px,100%); border:1px solid var(--line); border-radius:18px; padding:26px; background:#0f1318; }
+  h1 { font-size:20px; letter-spacing:.18em; text-transform:uppercase; }
+  .sub { color:var(--dim); font-size:12.5px; margin-top:6px; letter-spacing:.04em; }
+  .row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; }
+  .row b { color:var(--gold); font-weight:600; }
+  .art { display:grid; place-items:center; margin:18px 0; }
+  .art img { width:180px; height:180px; border-radius:14px; border:1px solid var(--line); }
+  button { width:100%; margin-top:16px; padding:13px; border-radius:12px; border:1px solid var(--gold);
+           background:transparent; color:var(--gold); font:inherit; letter-spacing:.08em; cursor:pointer; }
+  button:hover { background:rgba(245,199,106,.08); }
+  button:disabled { opacity:.45; cursor:not-allowed; }
+  .msg { margin-top:12px; font-size:12.5px; color:var(--dim); min-height:18px; word-break:break-all; }
+  a { color:var(--gold); }
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Lodepass</h1>
+  <div class="sub">Pass tambang on-chain · mint hanya untuk pemegang Binance Agent ID (.ai)</div>
+
+  <div class="art"><img id="art" alt="lode" /></div>
+
+  <div class="row"><span>supply</span><b id="supply">—</b></div>
+  <div class="row"><span>harga (setelah 1 gratis)</span><b id="price">—</b></div>
+  <div class="row"><span>kuota kamu</span><b id="quota">—</b></div>
+  <div class="row"><span>gate</span><b id="gate">—</b></div>
+
+  <button id="mint" disabled>connect wallet</button>
+  <div class="msg" id="msg"></div>
+</div>
+
+<script type="module">
+// Ganti dua nilai ini setelah deploy:
+const CONTRACT = "0x31b074C8e77e44F29df285F19d4fc76E6D927d01";
+const MARKET = "0xf607c6aD07c173056B7D4D63d0c9d26Ad9D3f4E2";
+const EXPLORER = "https://bscscan.com/address/";
+
+const ABI = [
+  "function totalMinted() view returns (uint256)",
+  "function pending(uint256) view returns (uint256)",
+  "function claim(uint256)",
+  "function forge(uint256[3]) returns (uint256)",
+  "function MAX_SUPPLY() view returns (uint256)",
+  "function priceWei() view returns (uint256)",
+  "function MAX_PER_WALLET() view returns (uint256)",
+  "function mintedBy(address) view returns (uint256)",
+  "function agentRegistry() view returns (address)",
+  "function tokenURI(uint256) view returns (string)",
+  "function mint(uint256 quantity) payable",
+];
+const REG_ABI = ["function balanceOf(address) view returns (uint256)"];
+
+const $ = (id) => document.getElementById(id);
+let provider, signer, account, contract;
+
+async function initEthers() {
+  if (!window.ethereum) throw new Error("butuh wallet di browser (MetaMask/Rabby)");
+  const { ethers } = await import("https://esm.sh/ethers@6");
+  provider = new ethers.BrowserProvider(window.ethereum);
+  await provider.send("eth_requestAccounts", []);
+  signer = await provider.getSigner();
+  account = await signer.getAddress();
+  contract = new ethers.Contract(CONTRACT, ABI, signer);
+  return ethers;
+}
+
+async function refresh(ethers) {
+  const [total, max, price, perWallet, mine, reg] = await Promise.all([
+    contract.totalMinted(), contract.MAX_SUPPLY(), contract.priceWei(),
+    contract.MAX_PER_WALLET(), contract.mintedBy(account), contract.agentRegistry(),
+  ]);
+  $("supply").textContent = `${total} / ${max}`;
+  $("price").textContent = `${ethers.formatEther(price)} BNB`;
+  $("quota").textContent = `${mine} / ${perWallet}`;
+  const registry = new ethers.Contract(reg, REG_ABI, provider);
+  const bal = await registry.balanceOf(account);
+  $("gate").textContent = bal > 0n ? "Agent ID ✓" : "bukan pemegang .ai";
+  $("mint").disabled = bal === 0n || total >= max;
+  $("mint").textContent = bal === 0n ? "wallet ini tidak punya Agent ID" : "mint 1";
+
+  // preview art dari keping terakhir (atau #1)
+  const id = total > 0n ? total : 1n;
+  try {
+    const uri = await contract.tokenURI(id);
+    const json = JSON.parse(atob(uri.split(",")[1]));
+    $("art").src = json.image;
+  } catch {}
+}
+
+$("mint").addEventListener("click", async () => {
+  try {
+    $("msg").textContent = "menyiapkan transaksi…";
+    const ethers = await initEthers();
+    const mine = await contract.mintedBy(account);
+    const price = await contract.priceWei();
+    const value = mine === 0n ? 0n : price; // keping pertama gratis
+    const tx = await contract.mint(1, { value });
+    $("msg").textContent = "tx terkirim: " + tx.hash;
+    await tx.wait();
+    $("msg").textContent = "berhasil ✓ " + tx.hash;
+    await refresh(ethers);
+  } catch (e) {
+    $("msg").textContent = "gagal: " + (e.shortMessage || e.message || e);
+  }
+});
+
+(async () => {
+  try {
+    if (CONTRACT === "0x0000000000000000000000000000000000000000") {
+      $("msg").innerHTML = "kontrak belum di-deploy — isi <code>CONTRACT</code> di file ini.";
+      return;
+    }
+    const ethers = await initEthers();
+    $("mint").textContent = "mint 1";
+    await refresh(ethers);
+  } catch (e) {
+    $("msg").textContent = e.message;
+  }
+})();
+</script>
+</body>
+</html>

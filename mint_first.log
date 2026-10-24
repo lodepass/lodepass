@@ -1,0 +1,5 @@
+[14:24:18] mint dibuka, mulai
+[14:24:19] preview ok · requestId 4fc7263272dc45ae95f896d244937336
+[14:24:20] execute: {"orderId": "26102400001991113450", "status": "BROADCASTED", "txHash": "0xb67d8f92a6fadaf1c43716044c742c1ba9ab3d7a3bff30dc97a73c2a766f1153", "message": null}
+[14:24:24] status 0x1 · gas 169727
+[14:24:24] tokenId: [1] · balanceOf: 1 · tx 0xb67d8f92a6fadaf1c43716044c742c1ba9ab3d7a3bff30dc97a73c2a766f1153

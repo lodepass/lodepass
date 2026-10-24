@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="400" height="400">
+<defs>
+<linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#120b02"/><stop offset="100%" stop-color="#070a0d"/></linearGradient>
+<linearGradient id="gl" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#fff4d6"/><stop offset="100%" stop-color="#f5c76a"/></linearGradient>
+<linearGradient id="gd" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#c99a3e"/><stop offset="100%" stop-color="#7a5518"/></linearGradient>
+<filter id="b"><feGaussianBlur stdDeviation="16"/></filter>
+</defs>
+<rect width="400" height="400" fill="url(#bg)"/>
+<circle cx="200" cy="200" r="104" fill="#f5c76a" opacity="0.16" filter="url(#b)"/>
+<polygon points="200,72 314,138 314,262 200,328 86,262 86,138" fill="url(#gd)"/>
+<polygon points="200,72 314,138 200,200 86,138" fill="url(#gl)" opacity="0.95"/>
+<polygon points="200,200 314,138 314,262 200,328" fill="url(#gd)" opacity="0.9"/>
+<polygon points="200,200 86,138 86,262 200,328" fill="url(#gl)" opacity="0.3"/>
+<g stroke="#f5c76a" stroke-width="1" opacity="0.4" fill="none">
+<line x1="200" y1="200" x2="200" y2="72"/><line x1="200" y1="200" x2="314" y2="138"/><line x1="200" y1="200" x2="86" y2="138"/>
+</g>
+<polygon points="200,72 314,138 314,262 200,328 86,262 86,138" fill="none" stroke="#f5c76a" stroke-width="4"/>
+<text x="200" y="222" fill="#1a1205" font-family="monospace" font-size="86" font-weight="bold" text-anchor="middle">L</text>
+</svg>

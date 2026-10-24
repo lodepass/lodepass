@@ -1,0 +1,5 @@
+No owner. No withdraw. No pause.
+
+Lodepass rules are immutable: 3,333 supply, free first piece, 0.0015 after that, 3-to-1 forge, 2.5% royalty, 2% market fee. The art is drawn by the contract itself, so nobody can pull it offline.
+
+https://tobrutjahat94.github.io/lodepass/

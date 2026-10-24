@@ -1,0 +1,7 @@
+Three pieces make one.
+
+Forge burns three Lodepass and mints a higher tier, so supply shrinks every time someone uses it. Common mines 1 LODE a day, Legendary mines 20.
+
+Units redeem for BNB from the reward pool, filled by mint and forge fees.
+
+https://tobrutjahat94.github.io/lodepass/
