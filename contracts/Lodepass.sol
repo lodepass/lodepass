@@ -22,6 +22,7 @@ contract Lodepass is ERC721, IERC2981 {
     uint256 public constant MAX_SUPPLY = 3333;
     uint256 public constant MAX_PER_WALLET = 5;
     uint256 public constant FREE_PER_WALLET = 1;
+    /// @dev how many wallets may claim the free piece (set at deploy)
     uint256 public constant FORGE_COST = 3;
     uint256 public constant ROYALTY_BPS = 250; // 2.5% - the lowest rate marketplaces commonly honour
 
@@ -29,6 +30,8 @@ contract Lodepass is ERC721, IERC2981 {
     address payable public immutable treasury;
     uint256 public immutable priceWei;
     uint256 public immutable forgeFeeWei;
+    /// @dev free pieces available across the whole collection (first N wallets)
+    uint256 public immutable freeQuota;
     /// @dev price of 1 mining unit (1e18) in wei - the value floor, locked at deploy
     uint256 public immutable unitPriceWei;
     uint256 public immutable startTime;
@@ -38,6 +41,8 @@ contract Lodepass is ERC721, IERC2981 {
 
     uint256 public totalMinted;
     uint256 public totalBurned;
+    /// @dev how many wallets already took their free piece
+    uint256 public freeClaimers;
 
     mapping(address => uint256) public mintedBy;
     mapping(address => uint256) public freeUsed;
@@ -70,6 +75,7 @@ contract Lodepass is ERC721, IERC2981 {
         address payable treasury_,
         uint256 priceWei_,
         uint256 forgeFeeWei_,
+        uint256 freeQuota_,
         uint256 unitPriceWei_,
         uint256 startTime_
     ) ERC721("Lodepass", "LODE") {
@@ -78,6 +84,7 @@ contract Lodepass is ERC721, IERC2981 {
         treasury = treasury_;
         priceWei = priceWei_;
         forgeFeeWei = forgeFeeWei_;
+        freeQuota = freeQuota_;
         unitPriceWei = unitPriceWei_;
         startTime = startTime_;
     }
@@ -93,6 +100,10 @@ contract Lodepass is ERC721, IERC2981 {
 
         uint256 freeLeft = FREE_PER_WALLET - freeUsed[msg.sender];
         uint256 freeQty = quantity < freeLeft ? quantity : freeLeft;
+        // free tier is capped collection-wide: first `freeQuota` wallets only
+        uint256 quotaLeft = freeQuota > freeClaimers ? freeQuota - freeClaimers : 0;
+        if (freeQty > quotaLeft) freeQty = quotaLeft;
+        if (freeQty > 0 && freeUsed[msg.sender] == 0) freeClaimers += 1;
         uint256 paidQty = quantity - freeQty;
         if (msg.value != paidQty * priceWei) revert WrongPayment();
 

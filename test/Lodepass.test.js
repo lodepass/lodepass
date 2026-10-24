@@ -3,7 +3,8 @@ const { ethers } = require("hardhat");
 
 const PRICE = ethers.parseEther("0.0015");
 const FORGE_FEE = ethers.parseEther("0.0005");
-const UNIT_PRICE = 1000000000000n; // 0,000001 BNB per 1 unit (1e18)
+const UNIT_PRICE = 1000000000000n;
+const FREE_QUOTA = 3; // 0,000001 BNB per 1 unit (1e18)
 const DAY = 24 * 60 * 60;
 const ZERO = 0n;
 
@@ -17,7 +18,7 @@ async function deploy() {
 
   const Lode = await ethers.getContractFactory("Lodepass");
   const start = (await ethers.provider.getBlock("latest")).timestamp;
-  const lode = await Lode.deploy(await reg.getAddress(), treasury.address, PRICE, FORGE_FEE, UNIT_PRICE, start + 60);
+  const lode = await Lode.deploy(await reg.getAddress(), treasury.address, PRICE, FORGE_FEE, FREE_QUOTA, UNIT_PRICE, start + 60);
   await lode.waitForDeployment();
   return { lode, reg, deployer, agentA, agentB, human, treasury, start };
 }
@@ -263,6 +264,27 @@ describe("Lodepass", function () {
     expect(await ethers.provider.getBalance(await lode.getAddress())).to.equal(0n);
     await (await lode.connect(treasury).fundRewards({ value: ethers.parseEther("0.002") })).wait();
     expect(await ethers.provider.getBalance(await lode.getAddress())).to.equal(await lode.rewardPool());
+  });
+
+
+  it("free tier is capped collection-wide (first N wallets only)", async function () {
+    const { lode, reg, start } = await deploy();
+    await warp(start + 120);
+    const signers = await ethers.getSigners();
+    const wallets = signers.slice(3, 8); // 5 wallet, kuota gratis 3
+    for (const w of wallets) await (await reg.set(w.address, 1)).wait();
+
+    let freeTaken = 0;
+    for (const w of wallets) {
+      try {
+        await (await lode.connect(w).mint(1, { value: 0 })).wait();
+        freeTaken++;
+      } catch (e) {
+        await (await lode.connect(w).mint(1, { value: PRICE })).wait();
+      }
+    }
+    expect(freeTaken).to.equal(3);
+    expect(await lode.freeClaimers()).to.equal(3n);
   });
 
   it("no owner, withdraw, pause or setPrice exists", async function () {

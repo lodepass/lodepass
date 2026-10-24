@@ -10,7 +10,7 @@ async function main() {
 
   const Lode = await ethers.getContractFactory("Lodepass");
   const now = (await ethers.provider.getBlock("latest")).timestamp;
-  const lode = await Lode.deploy(await reg.getAddress(), me.address, ethers.parseEther("0.0015"), ethers.parseEther("0.0005"), now);
+  const lode = await Lode.deploy(await reg.getAddress(), me.address, ethers.parseEther("0.0015"), ethers.parseEther("0.0005"), 333, now);
   const rc = await lode.deploymentTransaction().wait();
   console.log("deploy gasUsed:", rc.gasUsed.toString(), "· ukuran bytecode:", ((await ethers.provider.getCode(await lode.getAddress())).length - 2) / 2, "bytes");
 

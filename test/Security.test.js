@@ -4,6 +4,7 @@ const { ethers } = require("hardhat");
 const PRICE = ethers.parseEther("0.0015");
 const FORGE_FEE = ethers.parseEther("0.0005");
 const UNIT_PRICE = 1000000000000n;
+const FREE_QUOTA = 3;
 const DAY = 86400;
 
 async function deployAll() {
@@ -14,7 +15,7 @@ async function deployAll() {
 
   const Lode = await ethers.getContractFactory("Lodepass");
   const start = (await ethers.provider.getBlock("latest")).timestamp;
-  const lode = await Lode.deploy(await reg.getAddress(), treasury.address, PRICE, FORGE_FEE, UNIT_PRICE, start + 10);
+  const lode = await Lode.deploy(await reg.getAddress(), treasury.address, PRICE, FORGE_FEE, FREE_QUOTA, UNIT_PRICE, start + 10);
   await lode.waitForDeployment();
 
   const Market = await ethers.getContractFactory("LodeMarket");

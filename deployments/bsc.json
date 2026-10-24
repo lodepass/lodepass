@@ -1,6 +1,6 @@
 {
   "chainId": 56,
-  "deployedAt": "2026-10-24T14:09:08.635Z",
+  "deployedAt": "2026-10-24T15:37:53.724Z",
   "deployer": "0xCeE0f1901f19e7982456b68e2404992360eD2599",
   "treasury": "0x5088fD836CD682CD3a719D35Ba93986506801FEE",
   "lodepass": "0x31b074C8e77e44F29df285F19d4fc76E6D927d01",
@@ -9,9 +9,14 @@
   "priceWei": "1500000000000000",
   "forgeFeeWei": "500000000000000",
   "unitPriceWei": "5000000000000",
-  "startTime": 1792851842,
+  "startTime": 1792857167,
   "tx": {
-    "lodepass": "0x7061941588db126baa017185fde220a13555490a2dba27eea40a494ebddbc2a6",
-    "market": "0xffd5028eb830e5a7b75fbcd7a34fbd0dd2516e6eb912c437f17e9fe9705a67a8"
+    "lodepass": "0x3f24fc9560b61374e1eec65ae9bdced638b3a3a8fdb42b2214399015ff020e6a",
+    "market": "0xca44f6612afd81d2cf4d83123f79688003d7a9dae55486bff17fc43cdb2a0855"
+  },
+  "note_v2_unused": {
+    "lodepass": "0xc79D54B24225E012c563461C6EBbd38885D39E1f",
+    "market": "0x5855F57f6D63FAe50E12D57A48885D329AAa754B",
+    "why": "deployed but not used; v1 stays live with unlimited free tier"
   }
 }

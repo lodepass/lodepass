@@ -15,7 +15,7 @@ async function main() {
 
   const Lode = await ethers.getContractFactory("Lodepass");
   const now = (await ethers.provider.getBlock("latest")).timestamp;
-  const lode = await Lode.deploy(await reg.getAddress(), deployer.address, ethers.parseEther("0.0015"), ethers.parseEther("0.0005"), now);
+  const lode = await Lode.deploy(await reg.getAddress(), deployer.address, ethers.parseEther("0.0015"), ethers.parseEther("0.0005"), 333, now);
   await lode.waitForDeployment();
   await (await lode.mint(5, { value: ethers.parseEther("0.006") })).wait();
 

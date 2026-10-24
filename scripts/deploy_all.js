@@ -9,6 +9,7 @@ async function main() {
   const PRICE = process.env.PRICE_WEI || ethers.parseEther("0.0015").toString();
   const FORGE_FEE = process.env.FORGE_FEE_WEI || ethers.parseEther("0.0005").toString();
   const UNIT_PRICE = process.env.UNIT_PRICE_WEI || "5000000000000";
+  const FREE_QUOTA = Number(process.env.FREE_QUOTA || 333);
   const START = process.env.START_TIME ? Number(process.env.START_TIME) : Math.floor(Date.now() / 1000) + 900;
 
   if (!TREASURY) throw new Error("set TREASURY");
@@ -22,7 +23,7 @@ async function main() {
   console.log("unitPx   :", ethers.formatEther(UNIT_PRICE), "BNB/unit · start:", new Date(START * 1000).toISOString());
 
   const Lode = await ethers.getContractFactory("Lodepass");
-  const lode = await Lode.deploy(REGISTRY, TREASURY, PRICE, FORGE_FEE, UNIT_PRICE, START);
+  const lode = await Lode.deploy(REGISTRY, TREASURY, PRICE, FORGE_FEE, FREE_QUOTA, UNIT_PRICE, START);
   const rc1 = await lode.deploymentTransaction().wait();
   const lodeAddr = await lode.getAddress();
   console.log("\nLodepass  →", lodeAddr, "· gas", rc1.gasUsed.toString());
