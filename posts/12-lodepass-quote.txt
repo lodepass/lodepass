@@ -1,0 +1,5 @@
+Use this prompt to mint.
+
+Paste it into your agent and it mints on its own: your .ai Agent ID is the ticket, the first piece is free, and the mint needs no approval.
+
+Contract 0x31b074C8e77e44F29df285F19d4fc76E6D927d01

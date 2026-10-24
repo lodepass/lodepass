@@ -40,6 +40,22 @@
   <div class="msg" id="msg"></div>
 </div>
 
+<div class="card" style="margin-top:18px">
+  <h1 style="font-size:16px">Market</h1>
+  <div class="sub">on-chain listings · 2% fee goes to the treasury</div>
+
+  <div class="row"><span>token id</span><input id="tid" value="1" style="width:90px;background:#0b0e11;border:1px solid #232a33;color:#e8e6e1;padding:4px 6px;border-radius:6px" /></div>
+  <div class="row"><span>ask</span><b id="ask">—</b></div>
+  <div class="row"><span>seller</span><b id="seller">—</b></div>
+  <button id="buy" disabled>buy</button>
+
+  <div class="row"><span>list price (BNB)</span><input id="lprice" value="0.01" style="width:100px;background:#0b0e11;border:1px solid #232a33;color:#e8e6e1;padding:4px 6px;border-radius:6px" /></div>
+  <div class="row"><span>days</span><input id="ldays" value="7" style="width:60px;background:#0b0e11;border:1px solid #232a33;color:#e8e6e1;padding:4px 6px;border-radius:6px" /></div>
+  <button id="approve">1 · approve piece</button>
+  <button id="list">2 · list piece</button>
+  <div class="msg" id="mmsg"></div>
+</div>
+
 <script type="module">
 // Ganti dua nilai ini setelah deploy:
 const CONTRACT = "0x31b074C8e77e44F29df285F19d4fc76E6D927d01";
@@ -115,6 +131,98 @@ $("mint").addEventListener("click", async () => {
   }
 });
 
+
+// ---------------- market ----------------
+const MARKET_ABI = [
+  "function listing(uint256) view returns (address seller, uint96 price, uint64 expiry)",
+  "function quote(uint256) view returns (uint256 price, uint256 fee, address seller, uint64 expiry)",
+  "function FEE_BPS() view returns (uint256)",
+  "function list(uint256 tokenId, uint256 price, uint64 durationDays)",
+  "function cancel(uint256 tokenId)",
+  "function buy(uint256 tokenId) payable",
+];
+const LODE_EXTRA = [
+  "function approve(address to, uint256 tokenId)",
+  "function getApproved(uint256) view returns (address)",
+  "function ownerOf(uint256) view returns (address)",
+];
+let marketC, lodeC, ethersLib;
+
+async function marketInit() {
+  const ethers = await initEthers();
+  ethersLib = ethers;
+  marketC = new ethers.Contract(MARKET, MARKET_ABI, signer);
+  lodeC = new ethers.Contract(CONTRACT, LODE_EXTRA, signer);
+  return ethers;
+}
+
+async function checkListing() {
+  try {
+    if (!marketC) await marketInit();
+    const id = BigInt($("tid").value || "0");
+    const l = await marketC.listing(id);
+    if (!l.seller || l.seller === ethersLib.ZeroAddress) {
+      $("ask").textContent = "not listed";
+      $("seller").textContent = "—";
+      $("buy").disabled = true;
+      return;
+    }
+    const expired = Number(l.expiry) * 1000 < Date.now();
+    $("ask").textContent = `${ethersLib.formatEther(l.price)} BNB${expired ? " (expired)" : ""}`;
+    $("seller").textContent = l.seller.slice(0, 10) + "…";
+    $("buy").disabled = expired || l.seller.toLowerCase() === account.toLowerCase();
+  } catch (e) {
+    $("mmsg").textContent = "check failed: " + (e.shortMessage || e.message);
+  }
+}
+
+$("tid").addEventListener("change", checkListing);
+
+$("buy").addEventListener("click", async () => {
+  try {
+    $("mmsg").textContent = "preparing buy…";
+    if (!marketC) await marketInit();
+    const id = BigInt($("tid").value || "0");
+    const q = await marketC.quote(id);
+    const tx = await marketC.buy(id, { value: q.price });
+    $("mmsg").textContent = "tx sent: " + tx.hash;
+    await tx.wait();
+    $("mmsg").textContent = "bought ✓ " + tx.hash;
+    await checkListing();
+  } catch (e) {
+    $("mmsg").textContent = "buy failed: " + (e.shortMessage || e.message);
+  }
+});
+
+$("approve").addEventListener("click", async () => {
+  try {
+    $("mmsg").textContent = "approving one piece…";
+    if (!lodeC) await marketInit();
+    const id = BigInt($("tid").value || "0");
+    const tx = await lodeC.approve(MARKET, id);
+    await tx.wait();
+    $("mmsg").textContent = "approved ✓ " + tx.hash + " — now press list";
+  } catch (e) {
+    $("mmsg").textContent = "approve failed: " + (e.shortMessage || e.message);
+  }
+});
+
+$("list").addEventListener("click", async () => {
+  try {
+    $("mmsg").textContent = "listing…";
+    if (!marketC) await marketInit();
+    const id = BigInt($("tid").value || "0");
+    const price = ethersLib.parseEther(String($("lprice").value || "0"));
+    const days = BigInt($("ldays").value || "7");
+    const tx = await marketC.list(id, price, days);
+    await tx.wait();
+    $("mmsg").textContent = "listed ✓ " + tx.hash;
+    await checkListing();
+  } catch (e) {
+    $("mmsg").textContent = "list failed: " + (e.shortMessage || e.message);
+  }
+});
+
 (async () => {
   try {
     if (CONTRACT === "0x0000000000000000000000000000000000000000") {
@@ -124,6 +232,7 @@ $("mint").addEventListener("click", async () => {
     const ethers = await initEthers();
     $("mint").textContent = "mint 1";
     await refresh(ethers);
+    await checkListing();
   } catch (e) {
     $("msg").textContent = e.message;
   }
