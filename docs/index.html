@@ -5,237 +5,263 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Lodepass - mining pass for .ai agents</title>
 <style>
-  :root { --ink:#e8e6e1; --dim:#8b929c; --line:#232a33; --gold:#f5c76a; --bg:#0b0e11; }
+  :root { --ink:#e8e6e1; --dim:#8b929c; --line:#232a33; --gold:#f5c76a; --bg:#0b0e11; --panel:#0f1318; }
   * { box-sizing:border-box; margin:0; padding:0; }
   body { background:var(--bg); color:var(--ink); font:15px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;
-         display:flex; align-items:center; justify-content:center; min-height:100vh; padding:24px; }
-  .card { width:min(560px,100%); border:1px solid var(--line); border-radius:18px; padding:26px; background:#0f1318; }
-  h1 { font-size:20px; letter-spacing:.18em; text-transform:uppercase; }
-  .sub { color:var(--dim); font-size:12.5px; margin-top:6px; letter-spacing:.04em; }
-  .row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid var(--line); font-size:13px; }
-  .row b { color:var(--gold); font-weight:600; }
-  .art { display:grid; place-items:center; margin:18px 0; }
-  .art img { width:180px; height:180px; border-radius:14px; border:1px solid var(--line); }
-  button { width:100%; margin-top:16px; padding:13px; border-radius:12px; border:1px solid var(--gold);
-           background:transparent; color:var(--gold); font:inherit; letter-spacing:.08em; cursor:pointer; }
-  button:hover { background:rgba(245,199,106,.08); }
-  button:disabled { opacity:.45; cursor:not-allowed; }
-  .msg { margin-top:12px; font-size:12.5px; color:var(--dim); min-height:18px; word-break:break-all; }
+         padding:16px; display:flex; justify-content:center; }
+  .wrap { width:100%; max-width:520px; }
+  .card { border:1px solid var(--line); border-radius:16px; padding:18px; background:var(--panel); margin-bottom:14px; }
+  h1 { font-size:18px; letter-spacing:.16em; text-transform:uppercase; }
+  h2 { font-size:12.5px; letter-spacing:.14em; text-transform:uppercase; color:var(--gold); }
+  .sub { color:var(--dim); font-size:12px; margin-top:6px; line-height:1.5; }
+  .art { display:grid; place-items:center; margin:14px 0; }
+  .art img { width:min(190px,58vw); border-radius:12px; border:1px solid var(--line); }
+  .row { display:flex; justify-content:space-between; align-items:center; gap:10px; padding:9px 0;
+         border-bottom:1px solid var(--line); font-size:13px; }
+  .row:last-of-type { border-bottom:none; }
+  .row b { color:var(--gold); font-weight:600; text-align:right; word-break:break-word; }
+  input { background:#0b0e11; border:1px solid var(--line); color:var(--ink); font:inherit;
+          padding:6px 8px; border-radius:8px; width:110px; text-align:right; }
+  button { width:100%; margin-top:10px; padding:12px; border-radius:11px; border:1px solid var(--gold);
+           background:transparent; color:var(--gold); font:inherit; letter-spacing:.05em; cursor:pointer; }
+  button:hover:not(:disabled) { background:rgba(245,199,106,.08); }
+  button:disabled { opacity:.4; cursor:not-allowed; }
+  .msg { margin-top:9px; font-size:12px; color:var(--dim); min-height:15px; word-break:break-word; }
+  .note { font-size:11.5px; color:var(--dim); margin-top:8px; line-height:1.5; }
   a { color:var(--gold); }
 </style>
 </head>
 <body>
-<div class="card">
-  <h1>Lodepass</h1>
-  <div class="sub">On-chain mining pass · mint is limited to Binance Agent ID (.ai) holders</div>
+<div class="wrap">
 
-  <div class="art"><img id="art" alt="lode" /></div>
+  <div class="card">
+    <h1>Lodepass</h1>
+    <div class="sub">On-chain mining pass · mint is limited to Binance Agent ID (.ai) holders</div>
 
-  <div class="row"><span>supply</span><b id="supply">—</b></div>
-  <div class="row"><span>price (after your free piece)</span><b id="price">—</b></div>
-  <div class="row"><span>your quota</span><b id="quota">—</b></div>
-  <div class="row"><span>gate</span><b id="gate">—</b></div>
+    <div class="art"><img id="art" alt="piece" /></div>
 
-  <button id="mint" disabled>connect wallet</button>
-  <div class="msg" id="msg"></div>
-</div>
+    <div class="row"><span>supply</span><b id="supply">—</b></div>
+    <div class="row"><span>price (after your free piece)</span><b id="price">—</b></div>
+    <div class="row"><span>your quota</span><b id="quota">—</b></div>
+    <div class="row"><span>gate</span><b id="gate">—</b></div>
+    <div class="row"><span>floor</span><b id="floor">—</b></div>
 
-<div class="card" style="margin-top:18px">
-  <h1 style="font-size:16px">Market</h1>
-  <div class="sub">on-chain listings · 2% fee goes to the treasury</div>
+    <button id="connect">connect wallet</button>
+    <button id="mint" disabled>mint 1</button>
+    <div class="msg" id="msg"></div>
+    <div class="note" id="walletNote"></div>
+  </div>
 
-  <div class="row"><span>token id</span><input id="tid" value="1" style="width:90px;background:#0b0e11;border:1px solid #232a33;color:#e8e6e1;padding:4px 6px;border-radius:6px" /></div>
-  <div class="row"><span>ask</span><b id="ask">—</b></div>
-  <div class="row"><span>seller</span><b id="seller">—</b></div>
-  <button id="buy" disabled>buy</button>
+  <div class="card">
+    <h2>Market</h2>
+    <div class="sub" style="margin-bottom:8px">on-chain listings · 2% fee to the treasury</div>
 
-  <div class="row"><span>list price (BNB)</span><input id="lprice" value="0.01" style="width:100px;background:#0b0e11;border:1px solid #232a33;color:#e8e6e1;padding:4px 6px;border-radius:6px" /></div>
-  <div class="row"><span>days</span><input id="ldays" value="7" style="width:60px;background:#0b0e11;border:1px solid #232a33;color:#e8e6e1;padding:4px 6px;border-radius:6px" /></div>
-  <button id="approve">1 · approve piece</button>
-  <button id="list">2 · list piece</button>
-  <div class="msg" id="mmsg"></div>
+    <div class="row"><span>token id</span><input id="tid" value="1" /></div>
+    <div class="row"><span>ask</span><b id="ask">—</b></div>
+    <div class="row"><span>seller</span><b id="seller">—</b></div>
+    <button id="buy" disabled>buy</button>
+
+    <div class="row"><span>list price (BNB)</span><input id="lprice" value="0.01" /></div>
+    <div class="row"><span>days</span><input id="ldays" value="7" /></div>
+    <button id="approve" disabled>1 · approve piece</button>
+    <button id="list" disabled>2 · list piece</button>
+    <div class="msg" id="mmsg"></div>
+  </div>
+
 </div>
 
 <script type="module">
-// Ganti dua nilai ini setelah deploy:
 const CONTRACT = "0x31b074C8e77e44F29df285F19d4fc76E6D927d01";
-const MARKET = "0xf607c6aD07c173056B7D4D63d0c9d26Ad9D3f4E2";
-const EXPLORER = "https://bscscan.com/address/";
+const MARKET   = "0xf607c6aD07c173056B7D4D63d0c9d26Ad9D3f4E2";
+const RPC      = "https://bsc-dataseed.bnbchain.org";
+const ZERO     = "0x0000000000000000000000000000000000000000";
 
-const ABI = [
+const LODE_ABI = [
   "function totalMinted() view returns (uint256)",
-  "function pending(uint256) view returns (uint256)",
-  "function claim(uint256)",
-  "function forge(uint256[3]) returns (uint256)",
   "function MAX_SUPPLY() view returns (uint256)",
   "function priceWei() view returns (uint256)",
   "function MAX_PER_WALLET() view returns (uint256)",
   "function mintedBy(address) view returns (uint256)",
+  "function freeUsed(address) view returns (uint256)",
   "function agentRegistry() view returns (address)",
   "function tokenURI(uint256) view returns (string)",
+  "function approve(address to, uint256 tokenId)",
   "function mint(uint256 quantity) payable",
+];
+const MARKET_ABI = [
+  "function listing(uint256) view returns (address seller, uint96 price, uint64 expiry)",
+  "function quote(uint256) view returns (uint256 price, uint256 fee, address seller, uint64 expiry)",
+  "function buy(uint256 tokenId) payable",
+  "function list(uint256 tokenId, uint256 price, uint64 durationDays)",
 ];
 const REG_ABI = ["function balanceOf(address) view returns (uint256)"];
 
 const $ = (id) => document.getElementById(id);
-let provider, signer, account, contract;
+let E, provider, signer, account, lode, market, roLode, roMarket;
 
-async function initEthers() {
-  if (!window.ethereum) throw new Error("a browser wallet is required (MetaMask/Rabby)");
-  const { ethers } = await import("https://esm.sh/ethers@6");
-  provider = new ethers.BrowserProvider(window.ethereum);
+const setMsg = (t) => ($("msg").textContent = t);
+const setMkt = (t) => ($("mmsg").textContent = t);
+
+async function lib() {
+  if (!E) E = await import("https://esm.sh/ethers@6");
+  return E;
+}
+
+async function readOnly() {
+  if (roLode) return;
+  const e = await lib();
+  const p = new e.JsonRpcProvider(RPC, 56, { staticNetwork: true });
+  roLode = new e.Contract(CONTRACT, LODE_ABI, p);
+  roMarket = new e.Contract(MARKET, MARKET_ABI, p);
+}
+
+async function refreshPublic() {
+  const e = await lib();
+  await readOnly();
+  const [total, max, price] = await Promise.all([roLode.totalMinted(), roLode.MAX_SUPPLY(), roLode.priceWei()]);
+  $("supply").textContent = `${total} / ${max}`;
+  $("price").textContent = `${e.formatEther(price)} BNB`;
+  try {
+    const uri = await roLode.tokenURI(total > 0n ? total : 1n);
+    $("art").src = JSON.parse(atob(uri.split(",")[1])).image;
+  } catch {}
+  try {
+    const l = await roMarket.listing(1);
+    $("floor").textContent = (!l.seller || l.seller === ZERO) ? "no listing yet" : `${e.formatEther(l.price)} BNB (#1)`;
+  } catch { $("floor").textContent = "—"; }
+}
+
+async function connect() {
+  if (typeof window.ethereum === "undefined") {
+    $("walletNote").innerHTML =
+      "No browser wallet on this page. Open it inside your wallet app's browser (MetaMask, Rabby, Trust, Binance), or import the contract in your wallet: <b>" + CONTRACT + "</b>";
+    setMsg("read-only mode");
+    return;
+  }
+  const e = await lib();
+  provider = new e.BrowserProvider(window.ethereum);
   await provider.send("eth_requestAccounts", []);
   signer = await provider.getSigner();
   account = await signer.getAddress();
-  contract = new ethers.Contract(CONTRACT, ABI, signer);
-  return ethers;
+  lode = new e.Contract(CONTRACT, LODE_ABI, signer);
+  market = new e.Contract(MARKET, MARKET_ABI, signer);
+  $("connect").textContent = account.slice(0, 6) + "…" + account.slice(-4);
+  $("approve").disabled = false;
+  $("list").disabled = false;
+  $("walletNote").textContent = "";
+  await refreshAccount();
 }
 
-async function refresh(ethers) {
-  const [total, max, price, perWallet, mine, reg] = await Promise.all([
-    contract.totalMinted(), contract.MAX_SUPPLY(), contract.priceWei(),
-    contract.MAX_PER_WALLET(), contract.mintedBy(account), contract.agentRegistry(),
+async function refreshAccount() {
+  const e = await lib();
+  await readOnly();
+  const [perWallet, mine, reg, price, freeUsed] = await Promise.all([
+    roLode.MAX_PER_WALLET(), roLode.mintedBy(account), roLode.agentRegistry(),
+    roLode.priceWei(), roLode.freeUsed(account),
   ]);
-  $("supply").textContent = `${total} / ${max}`;
-  $("price").textContent = `${ethers.formatEther(price)} BNB`;
   $("quota").textContent = `${mine} / ${perWallet}`;
-  const registry = new ethers.Contract(reg, REG_ABI, provider);
+  const registry = new e.Contract(reg, REG_ABI, provider);
   const bal = await registry.balanceOf(account);
-  $("gate").textContent = bal > 0n ? "Agent ID ✓" : "not an .ai holder";
-  $("mint").disabled = bal === 0n || total >= max;
-  $("mint").textContent = bal === 0n ? "this wallet has no Agent ID" : "mint 1";
-
-  // preview art from the latest piece (or #1)
-  const id = total > 0n ? total : 1n;
-  try {
-    const uri = await contract.tokenURI(id);
-    const json = JSON.parse(atob(uri.split(",")[1]));
-    $("art").src = json.image;
-  } catch {}
-}
-
-$("mint").addEventListener("click", async () => {
-  try {
-    $("msg").textContent = "preparing the transaction…";
-    const ethers = await initEthers();
-    const mine = await contract.mintedBy(account);
-    const price = await contract.priceWei();
-    const value = mine === 0n ? 0n : price; // first piece is free
-    const tx = await contract.mint(1, { value });
-    $("msg").textContent = "tx sent: " + tx.hash;
-    await tx.wait();
-    $("msg").textContent = "confirmed ✓ " + tx.hash;
-    await refresh(ethers);
-  } catch (e) {
-    $("msg").textContent = "failed: " + (e.shortMessage || e.message || e);
-  }
-});
-
-
-// ---------------- market ----------------
-const MARKET_ABI = [
-  "function listing(uint256) view returns (address seller, uint96 price, uint64 expiry)",
-  "function quote(uint256) view returns (uint256 price, uint256 fee, address seller, uint64 expiry)",
-  "function FEE_BPS() view returns (uint256)",
-  "function list(uint256 tokenId, uint256 price, uint64 durationDays)",
-  "function cancel(uint256 tokenId)",
-  "function buy(uint256 tokenId) payable",
-];
-const LODE_EXTRA = [
-  "function approve(address to, uint256 tokenId)",
-  "function getApproved(uint256) view returns (address)",
-  "function ownerOf(uint256) view returns (address)",
-];
-let marketC, lodeC, ethersLib;
-
-async function marketInit() {
-  const ethers = await initEthers();
-  ethersLib = ethers;
-  marketC = new ethers.Contract(MARKET, MARKET_ABI, signer);
-  lodeC = new ethers.Contract(CONTRACT, LODE_EXTRA, signer);
-  return ethers;
+  const isAgent = bal > 0n;
+  $("gate").textContent = isAgent ? "Agent ID ✓" : "not an .ai holder";
+  $("mint").disabled = !isAgent;
+  $("mint").textContent = !isAgent ? "this wallet has no Agent ID"
+    : freeUsed === 0n ? "mint 1 (free)" : `mint 1 (${e.formatEther(price)} BNB)`;
+  await checkListing();
 }
 
 async function checkListing() {
   try {
-    if (!marketC) await marketInit();
+    const e = await lib();
+    await readOnly();
     const id = BigInt($("tid").value || "0");
-    const l = await marketC.listing(id);
-    if (!l.seller || l.seller === ethersLib.ZeroAddress) {
+    const l = await roMarket.listing(id);
+    if (!l.seller || l.seller === ZERO) {
       $("ask").textContent = "not listed";
       $("seller").textContent = "—";
       $("buy").disabled = true;
       return;
     }
     const expired = Number(l.expiry) * 1000 < Date.now();
-    $("ask").textContent = `${ethersLib.formatEther(l.price)} BNB${expired ? " (expired)" : ""}`;
-    $("seller").textContent = l.seller.slice(0, 10) + "…";
-    $("buy").disabled = expired || l.seller.toLowerCase() === account.toLowerCase();
-  } catch (e) {
-    $("mmsg").textContent = "check failed: " + (e.shortMessage || e.message);
-  }
+    $("ask").textContent = `${e.formatEther(l.price)} BNB${expired ? " (expired)" : ""}`;
+    $("seller").textContent = l.seller.slice(0, 8) + "…" + l.seller.slice(-4);
+    const mine = account && l.seller.toLowerCase() === account.toLowerCase();
+    $("buy").disabled = expired || mine || !account;
+    $("buy").textContent = mine ? "your listing" : "buy";
+  } catch (err) { setMkt("check failed: " + (err.shortMessage || err.message)); }
 }
 
-$("tid").addEventListener("change", checkListing);
+$("connect").addEventListener("click", async () => {
+  try { await connect(); } catch (err) { setMsg("connect failed: " + (err.shortMessage || err.message)); }
+});
+$("tid").addEventListener("change", () => checkListing());
+
+$("mint").addEventListener("click", async () => {
+  try {
+    if (!signer) return setMsg("connect a wallet first");
+    const e = await lib();
+    setMsg("preparing…");
+    const freeUsed = await roLode.freeUsed(account);
+    const price = await roLode.priceWei();
+    const tx = await lode.mint(1, { value: freeUsed === 0n ? 0n : price });
+    setMsg("tx sent: " + tx.hash);
+    await tx.wait();
+    setMsg("confirmed ✓ " + tx.hash);
+    await refreshPublic();
+    await refreshAccount();
+  } catch (err) { setMsg("failed: " + (err.shortMessage || err.message)); }
+});
 
 $("buy").addEventListener("click", async () => {
   try {
-    $("mmsg").textContent = "preparing buy…";
-    if (!marketC) await marketInit();
+    if (!signer) return setMkt("connect a wallet first");
+    setMkt("preparing buy…");
     const id = BigInt($("tid").value || "0");
-    const q = await marketC.quote(id);
-    const tx = await marketC.buy(id, { value: q.price });
-    $("mmsg").textContent = "tx sent: " + tx.hash;
+    const q = await market.quote(id);
+    const tx = await market.buy(id, { value: q.price });
+    setMkt("tx sent: " + tx.hash);
     await tx.wait();
-    $("mmsg").textContent = "bought ✓ " + tx.hash;
+    setMkt("bought ✓ " + tx.hash);
     await checkListing();
-  } catch (e) {
-    $("mmsg").textContent = "buy failed: " + (e.shortMessage || e.message);
-  }
+    await refreshPublic();
+  } catch (err) { setMkt("buy failed: " + (err.shortMessage || err.message)); }
 });
 
 $("approve").addEventListener("click", async () => {
   try {
-    $("mmsg").textContent = "approving one piece…";
-    if (!lodeC) await marketInit();
+    if (!signer) return setMkt("connect a wallet first");
+    setMkt("approving one piece…");
     const id = BigInt($("tid").value || "0");
-    const tx = await lodeC.approve(MARKET, id);
+    const tx = await lode.approve(MARKET, id);
     await tx.wait();
-    $("mmsg").textContent = "approved ✓ " + tx.hash + " — now press list";
-  } catch (e) {
-    $("mmsg").textContent = "approve failed: " + (e.shortMessage || e.message);
-  }
+    setMkt("approved ✓ now press 2 · list piece");
+  } catch (err) { setMkt("approve failed: " + (err.shortMessage || err.message)); }
 });
 
 $("list").addEventListener("click", async () => {
   try {
-    $("mmsg").textContent = "listing…";
-    if (!marketC) await marketInit();
+    if (!signer) return setMkt("connect a wallet first");
+    const e = await lib();
+    setMkt("listing…");
     const id = BigInt($("tid").value || "0");
-    const price = ethersLib.parseEther(String($("lprice").value || "0"));
+    const price = e.parseEther(String($("lprice").value || "0"));
     const days = BigInt($("ldays").value || "7");
-    const tx = await marketC.list(id, price, days);
+    const tx = await market.list(id, price, days);
     await tx.wait();
-    $("mmsg").textContent = "listed ✓ " + tx.hash;
+    setMkt("listed ✓ " + tx.hash);
     await checkListing();
-  } catch (e) {
-    $("mmsg").textContent = "list failed: " + (e.shortMessage || e.message);
-  }
+    await refreshPublic();
+  } catch (err) { setMkt("list failed: " + (err.shortMessage || err.message)); }
 });
 
 (async () => {
-  try {
-    if (CONTRACT === "0x0000000000000000000000000000000000000000") {
-      $("msg").innerHTML = "contract not deployed yet - set <code>CONTRACT</code> in this file.";
-      return;
-    }
-    const ethers = await initEthers();
-    $("mint").textContent = "mint 1";
-    await refresh(ethers);
-    await checkListing();
-  } catch (e) {
-    $("msg").textContent = e.message;
+  if (typeof window.ethereum === "undefined") {
+    $("walletNote").textContent = "No browser wallet here, so the page is read-only. Open it in your wallet app to mint or trade.";
   }
+  try {
+    await refreshPublic();
+    await checkListing();
+  } catch (err) { setMsg("could not read chain: " + (err.shortMessage || err.message)); }
 })();
 </script>
 </body>
