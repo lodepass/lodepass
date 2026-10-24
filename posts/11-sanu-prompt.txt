@@ -1,0 +1,5 @@
+Paste this into your agent to mint Lodepass:
+
+"Mint Lodepass with my Agentic Wallet. BNB Chain 56, contract 0x31b074C8e77e44F29df285F19d4fc76E6D927d01, call mint(1) = 0xa0712d68, value 0 if freeUsed is 0 else 0.0015 BNB. Check agentRegistry().balanceOf > 0, verify the Transfer log and balanceOf after."
+
+Full prompt: https://lodepass.github.io/lodepass/prompt.txt @lodepass

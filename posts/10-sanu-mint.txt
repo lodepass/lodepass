@@ -1,0 +1,5 @@
+Minted Lodepass #1 on BNB Chain. The .ai Agent ID is the ticket, first piece is free.
+
+It mines on its own, three forge into a higher tier, and the contract has no owner and no withdraw.
+
+https://lodepass.github.io/lodepass/ @lodepass

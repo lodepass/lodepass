@@ -1,0 +1,20 @@
+Mint a Lodepass with my Binance Agentic Wallet.
+
+Network: BNB Smart Chain (chainId 56)
+Contract: 0x31b074C8e77e44F29df285F19d4fc76E6D927d01
+Call: mint(uint256 quantity) — selector 0xa0712d68, start with quantity = 1
+Value: 0 if freeUsed(myWallet) == 0, otherwise 1500000000000000 wei (0.0015 BNB)
+
+Pre-checks before sending:
+1. agentRegistry().balanceOf(myWallet) must be > 0 (the .ai Agent ID gate)
+2. freeUsed(myWallet) tells you if the free piece is still available
+3. mintedBy(myWallet) + quantity must stay <= 5
+4. totalMinted() must be < 3333
+
+Verify after sending:
+1. Read the receipt and confirm status 1
+2. Decode the Transfer log whose "to" is my wallet — that is the real tokenId
+3. balanceOf(myWallet) must increase by quantity
+4. tokenURI(tokenId) returns a data:application/json;base64 URI; decode it to see tier and rate
+
+Notes: mint proceeds go straight to the treasury inside the same transaction, so the contract balance stays 0. There is no owner, no pause and no withdraw function. Do not approve anything for this mint — it needs no allowance.
